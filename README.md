@@ -102,17 +102,6 @@ The backend exposes a singular POST endpoint designed explicitly to consume JSON
 
 ---
 
-## 📸 Screenshots
-
-*(Replace the placeholders below with the actual deployed screenshots!)*
-
-![Frontend User Interface](path/to/placeholder_ui_screenshot.png)
-> *The interactive, glassmorphism-based cinematic frontend UI capturing predictive configurations.*
-
-![Prediction Results](path/to/placeholder_result_screenshot.png)
-> *Probability mapping dynamically rendering Hit, Average, or Flop visual cues based on ML analysis.*
-
----
 
 ## 🛠️ How to Run Locally
 
