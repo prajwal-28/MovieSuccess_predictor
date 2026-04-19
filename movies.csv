@@ -1,0 +1,26 @@
+title,genre,director,budget,revenue,rating,votes,runtime,year,status
+Inception,Sci-Fi,Christopher Nolan,160000000,836800000,8.8,2200000,148,2010,Hit
+The Room,Drama,Tommy Wiseau,6000000,1800000,3.6,95000,99,2003,Flop
+Interstellar,Sci-Fi,Christopher Nolan,165000000,701700000,8.6,1700000,169,2014,Hit
+The Godfather,Crime,Francis Ford Coppola,6000000,245066411,9.2,1800000,175,1972,Hit
+Cats,Musical,Tom Hooper,95000000,73800000,2.8,72000,110,2019,Flop
+Joker,Thriller,Todd Phillips,55000000,1074000000,8.4,1100000,122,2019,Hit
+Mars Needs Moms,Animation,Simon Wells,150000000,39000000,5.4,27000,88,2011,Flop
+Titanic,Romance,James Cameron,200000000,2187000000,7.8,1100000,195,1997,Hit
+John Carter,Sci-Fi,Andrew Stanton,264000000,284100000,6.6,260000,132,2012,Flop
+Parasite,Thriller,Bong Joon-ho,11400000,258800000,8.6,750000,132,2019,Hit
+The Shawshank Redemption,Drama,Frank Darabont,25000000,58300000,9.3,2500000,142,1994,Average
+Avengers Endgame,Action,Anthony Russo,356000000,2798000000,8.4,960000,181,2019,Hit
+Lone Ranger,Western,Gore Verbinski,215000000,260500000,6.5,190000,149,2013,Flop
+The Dark Knight,Action,Christopher Nolan,185000000,1005000000,9.0,2500000,152,2008,Hit
+Blade Runner 2049,Sci-Fi,Denis Villeneuve,150000000,259200000,8.0,520000,164,2017,Average
+Forrest Gump,Drama,Robert Zemeckis,55000000,678200000,8.8,1900000,142,1994,Hit
+Mortal Engines,Sci-Fi,Christian Rivers,100000000,83600000,6.1,89000,128,2018,Flop
+The Matrix,Sci-Fi,Lana Wachowski,63000000,466000000,8.7,1800000,136,1999,Hit
+Geostorm,Action,Dean Devlin,120000000,221600000,5.3,72000,109,2017,Flop
+Gladiator,Action,Ridley Scott,103000000,460500000,8.5,1400000,155,2000,Hit
+A Star Is Born,Romance,Bradley Cooper,36000000,436200000,7.6,300000,136,2018,Hit
+Solo A Star Wars Story,Sci-Fi,Ron Howard,275000000,393200000,6.9,,135,2018,Average
+Tenet,Sci-Fi,Christopher Nolan,205000000,363700000,7.3,,150,2020,Average
+Justice League,Action,Zack Snyder,300000000,657900000,6.1,,120,2017,Average
+King Arthur,Action,Guy Ritchie,175000000,148600000,,170000,126,2017,Flop
