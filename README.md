@@ -93,14 +93,6 @@ The backend exposes a singular POST endpoint designed explicitly to consume JSON
 }
 ```
 
----
-
-## 🌍 Live Demo
-
-* **Frontend Web App:** [https://movie-success-predictor-ui.vercel.app/](https://movie-success-predictor-ui.vercel.app/) *(Placeholder URL — Vercel URL)*
-* **Backend API Base:** [https://moviesuccess-predictor.onrender.com/](https://moviesuccess-predictor.onrender.com/)
-
----
 
 
 ## 🛠️ How to Run Locally
