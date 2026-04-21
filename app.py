@@ -1,7 +1,8 @@
 """
 Movie Success Predictor - Flask Backend API
 ===========================================
-Serves a trained ML model via a REST endpoint.
+Serves a trained Random Forest ML model via a REST endpoint.
+Note: Predicts without data leakage (no budget or revenue required).
 
 Endpoint:
     POST /predict
@@ -9,13 +10,10 @@ Endpoint:
 
 Example request body:
     {
-        "budget":  160000000,
-        "revenue": 836800000,
         "rating":  8.8,
         "votes":   2200000,
         "runtime": 148,
         "year":    2010,
-        "roi":     5.23,
         "genre":   "Sci-Fi"
     }
 
@@ -39,49 +37,45 @@ from flask import Flask, request, jsonify
 
 MODEL_PATH = "best_model.pkl"
 
-# Exact column order used during model training (final_movies.csv)
-FEATURE_COLUMNS = [
-    "budget", "revenue", "rating", "votes",
-    "runtime", "year", "roi",
-    "genre_Action", "genre_Animation", "genre_Crime",
-    "genre_Drama", "genre_Musical", "genre_Romance",
-    "genre_Sci-Fi", "genre_Thriller", "genre_Western",
+# Exact numeric fields trained on
+NUMERIC_FIELDS = ["rating", "votes", "runtime", "year"]
+
+# Exact valid genres available in the TMDB large dataset
+VALID_GENRES = [
+    "Action", "Adventure", "Animation", "Comedy", "Crime", 
+    "Documentary", "Drama", "Family", "Fantasy", "Foreign", 
+    "History", "Horror", "Music", "Mystery", "Romance", 
+    "Science Fiction", "Thriller", "War", "Western"
 ]
 
-# Numeric fields that come directly from the request body
-NUMERIC_FIELDS = ["budget", "revenue", "rating", "votes", "runtime", "year", "roi"]
-
-# Valid genre values accepted in the API
-VALID_GENRES = [
-    "Action", "Animation", "Crime",
-    "Drama", "Musical", "Romance",
-    "Sci-Fi", "Thriller", "Western",
+# Exact feature column order seen by the model during training
+FEATURE_COLUMNS = [
+    "runtime", "rating", "votes", "year", 
+    "genre_Action", "genre_Adventure", "genre_Animation", 
+    "genre_Comedy", "genre_Crime", "genre_Documentary", 
+    "genre_Drama", "genre_Family", "genre_Fantasy", 
+    "genre_Foreign", "genre_History", "genre_Horror", 
+    "genre_Music", "genre_Mystery", "genre_Romance", 
+    "genre_Science Fiction", "genre_Thriller", "genre_War", 
+    "genre_Western"
 ]
 
 # Label map: integer output → class name
 LABEL_MAP = {0: "Average", 1: "Flop", 2: "Hit"}
 
-# Scaling parameters derived from training data (final_movies.csv)
-# These reproduce StandardScaler without re-fitting at request time,
-# keeping the API stateless and fast.
-# Exact values from StandardScaler fit on post-outlier-removal training data
+# Scaling parameters derived from new large training data
+# These reproduce the StandardScaler
 SCALE_MEANS = {
-    "budget":  1.448421e+08,
-    "revenue": 3.871526e+08,
-    "rating":  7.315789e+00,
-    "votes":   9.625263e+05,
-    "runtime": 1.357895e+02,
-    "year":    2.010526e+03,
-    "roi":     3.529841e+00,
+    'rating': 6.22938, 
+    'votes': 646.32763, 
+    'runtime': 109.60243, 
+    'year': 2002.04256
 }
 SCALE_STDS = {
-    "budget":  8.322466e+07,
-    "revenue": 2.765200e+08,
-    "rating":  1.502371e+00,
-    "votes":   8.628671e+05,
-    "runtime": 2.040273e+01,
-    "year":    8.267682e+00,
-    "roi":     3.537916e+00,
+    'rating': 0.86751, 
+    'votes': 816.92100, 
+    'runtime': 19.89296, 
+    'year': 12.29971
 }
 
 
@@ -114,17 +108,6 @@ model = load_model()
 def validate_input(data: dict) -> tuple[dict | None, str | None]:
     """
     Validate and coerce incoming JSON payload.
-
-    Checks:
-      - All required fields are present
-      - Numeric fields can be cast to float
-      - Genre is one of the known categories
-      - No negative budget / revenue
-
-    Returns
-    -------
-    (clean_data, None)  on success
-    (None, error_msg)   on failure
     """
     required_fields = NUMERIC_FIELDS + ["genre"]
 
@@ -139,10 +122,10 @@ def validate_input(data: dict) -> tuple[dict | None, str | None]:
     for field in NUMERIC_FIELDS:
         try:
             value = float(data[field])
-        except (TypeError, ValueError):
+        except (ValueError, TypeError):
             return None, f"Field '{field}' must be a number, got: {data[field]!r}"
 
-        if field in ("budget", "revenue", "votes", "runtime", "year") and value < 0:
+        if field in ("votes", "runtime") and value < 0:
             return None, f"Field '{field}' cannot be negative."
 
         if field == "rating" and not (0.0 <= value <= 10.0):
@@ -156,6 +139,8 @@ def validate_input(data: dict) -> tuple[dict | None, str | None]:
     # ── 3. Genre check ─────────────────────────
     genre = str(data["genre"]).strip()
     if genre not in VALID_GENRES:
+        # Fallback to similar available genres or strict block.
+        # Strict block for integrity
         return None, (
             f"Invalid genre '{genre}'. "
             f"Must be one of: {VALID_GENRES}"
@@ -172,8 +157,6 @@ def validate_input(data: dict) -> tuple[dict | None, str | None]:
 def encode_genre(genre: str) -> dict:
     """
     Convert the genre string to one-hot encoded columns.
-
-    Returns a dict of all genre_* columns set to 0 or 1.
     """
     one_hot = {f"genre_{g}": 0 for g in VALID_GENRES}
     one_hot[f"genre_{genre}"] = 1
@@ -183,11 +166,7 @@ def encode_genre(genre: str) -> dict:
 def scale_numeric(clean: dict) -> dict:
     """
     Apply StandardScaler using pre-computed training statistics.
-
     z = (x - mean) / std
-
-    Only the 7 continuous numeric features are scaled;
-    one-hot genre columns are left as 0/1 integers.
     """
     scaled = {}
     for field in NUMERIC_FIELDS:
@@ -199,27 +178,22 @@ def scale_numeric(clean: dict) -> dict:
 
 def build_feature_vector(clean: dict) -> pd.DataFrame:
     """
-    Assemble a single-row DataFrame with columns in the exact
-    order used during model training.
-
-    Steps:
-      1. Scale numeric features
-      2. One-hot encode genre
-      3. Combine into FEATURE_COLUMNS order
-
-    Returns
-    -------
-    pd.DataFrame  — shape (1, 16)
+    Assemble a single-row DataFrame.
     """
     scaled   = scale_numeric(clean)
     one_hot  = encode_genre(clean["genre"])
 
-    # Merge scaled numerics + one-hot features
     row = {**scaled, **one_hot}
 
-    # Build DataFrame with controlled column order
+    # Build DataFrame with exact feature columns
     feature_df = pd.DataFrame([row])[FEATURE_COLUMNS]
-    return feature_df
+    
+    # Fill any missing encoded genres explicitly with zero
+    for col in FEATURE_COLUMNS:
+        if col not in feature_df:
+            feature_df[col] = 0.0
+            
+    return feature_df[FEATURE_COLUMNS]
 
 
 # ──────────────────────────────────────────────
@@ -242,18 +216,7 @@ def index():
 def predict():
     """
     POST /predict
-    Content-Type: application/json
-
-    Accepts a JSON body with movie features and returns the
-    predicted success label: Hit / Average / Flop.
-
-    Success response  (200):
-        { "prediction": "Hit", "confidence": "model_class" }
-
-    Error response  (400 / 422):
-        { "error": "<description>" }
     """
-    # ── Parse JSON body ─────────────────────────
     if not request.is_json:
         return jsonify({"error": "Content-Type must be application/json"}), 415
 
@@ -261,23 +224,19 @@ def predict():
     if data is None:
         return jsonify({"error": "Request body is not valid JSON."}), 400
 
-    # ── Validate ────────────────────────────────
     clean, err = validate_input(data)
     if err:
         return jsonify({"error": err}), 422
 
-    # ── Preprocess ──────────────────────────────
     try:
         feature_df = build_feature_vector(clean)
     except Exception as e:
         return jsonify({"error": f"Preprocessing failed: {str(e)}"}), 500
 
-    # ── Predict ─────────────────────────────────
     try:
         pred_int   = int(model.predict(feature_df)[0])
         pred_label = LABEL_MAP.get(pred_int, "Unknown")
-
-        # Probability scores (not all estimators support this)
+        
         response = {"prediction": pred_label}
 
         if hasattr(model, "predict_proba"):
@@ -299,13 +258,11 @@ def predict():
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
-    # PORT is injected automatically by Render (and other cloud platforms).
-    # Falls back to 5000 for local development.
     port  = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
 
-    print("\n  Movie Success Predictor — Flask API")
-    print("  ====================================")
+    print("\n  Movie Success Predictor — Flask API (No Leakage Edition)")
+    print("  ========================================================")
     print(f"  POST http://localhost:{port}/predict")
     print(f"  GET  http://localhost:{port}/         (health check)\n")
     app.run(host="0.0.0.0", port=port, debug=debug)

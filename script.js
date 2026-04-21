@@ -22,11 +22,6 @@ const resultCard = document.getElementById("result-card");
 const resultIcon = document.getElementById("result-icon");
 const resultVerdict = document.getElementById("result-verdict");
 const probSection = document.getElementById("prob-section");
-const roiHint = document.getElementById("roi-hint");
-const roiCalcVal = document.getElementById("roi-calc-val");
-const roiInput = document.getElementById("roi");
-const budgetInput = document.getElementById("budget");
-const revenueInput = document.getElementById("revenue");
 
 // ── Config Maps ─────────────────────────────────────────────────
 const RESULT_CONFIG = {
@@ -36,31 +31,8 @@ const RESULT_CONFIG = {
 };
 
 const REQUIRED_FIELDS = [
-  "budget", "revenue", "rating", "votes",
-  "runtime", "year", "roi", "genre",
+  "rating", "votes", "runtime", "year", "genre",
 ];
-
-// ── ROI Auto-Calculate ──────────────────────────────────────────
-/**
- * Watches budget + revenue inputs and auto-fills ROI,
- * showing a tooltip with the computed value.
- */
-function updateRoiHint() {
-  const budget = parseFloat(budgetInput.value);
-  const revenue = parseFloat(revenueInput.value);
-
-  if (budget > 0 && revenue >= 0) {
-    const roi = (revenue / budget).toFixed(4);
-    roiInput.value = roi;
-    roiCalcVal.textContent = roi;
-    roiHint.style.display = "block";
-  } else {
-    roiHint.style.display = "none";
-  }
-}
-
-budgetInput.addEventListener("input", updateRoiHint);
-revenueInput.addEventListener("input", updateRoiHint);
 
 // ── Validation ──────────────────────────────────────────────────
 /**
@@ -92,7 +64,7 @@ function validateForm() {
       }
     }
 
-    if (["budget", "revenue", "votes", "runtime"].includes(fieldId)) {
+    if (["votes", "runtime"].includes(fieldId)) {
       if (parseFloat(val) < 0) {
         el.classList.add("invalid");
         errors.push(`'${fieldId}' cannot be negative.`);
@@ -209,13 +181,10 @@ async function submitPrediction(event) {
 
   // Build payload
   const payload = {
-    budget: parseFloat(document.getElementById("budget").value),
-    revenue: parseFloat(document.getElementById("revenue").value),
     rating: parseFloat(document.getElementById("rating").value),
     votes: parseFloat(document.getElementById("votes").value),
     runtime: parseFloat(document.getElementById("runtime").value),
     year: parseInt(document.getElementById("year").value, 10),
-    roi: parseFloat(document.getElementById("roi").value),
     genre: document.getElementById("genre").value,
   };
 

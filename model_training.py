@@ -40,15 +40,15 @@ TARGET_COL  = "label"
 LABEL_NAMES = {0: "Average", 1: "Flop", 2: "Hit"}
 RANDOM_SEED = 42
 
-# With only 19 rows, use 3-fold CV to keep each fold ≥ 2 samples per class
-CV_FOLDS = 3
+# With a larger dataset, 5-fold CV is appropriate
+CV_FOLDS = 5
 
 
 # ──────────────────────────────────────────────
 #  1. Load Dataset
 # ──────────────────────────────────────────────
 
-def load_dataset(filepath: str = "final_movies.csv") -> pd.DataFrame:
+def load_dataset(filepath: str = "final_movies_large.csv") -> pd.DataFrame:
     """Load the final scaled movie dataset."""
     try:
         df = pd.read_csv(filepath)
@@ -76,7 +76,8 @@ def split_data(df: pd.DataFrame,
     -------
     X_train, X_test, y_train, y_test
     """
-    X = df.drop(columns=[TARGET_COL])
+    # Prevent Data Leakage: drop fields used to calculate the label
+    X = df.drop(columns=[TARGET_COL, "budget", "revenue", "roi"], errors="ignore")
     y = df[TARGET_COL].astype(int)
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -167,9 +168,10 @@ def train_models(X_train, y_train) -> dict:
             solver="lbfgs",
             max_iter=1000,
             random_state=RANDOM_SEED,
+            class_weight="balanced"
         ),
         param_grid={
-            "C": [0.01, 0.1, 0.5, 1.0, 5.0, 10.0],
+            "C": [0.1, 1, 10],
         },
         X_train=X_train,
         y_train=y_train,
@@ -178,10 +180,9 @@ def train_models(X_train, y_train) -> dict:
 
     # ── Decision Tree ────────────────────────
     dt = tune_model(
-        estimator=DecisionTreeClassifier(random_state=RANDOM_SEED),
+        estimator=DecisionTreeClassifier(random_state=RANDOM_SEED, class_weight="balanced"),
         param_grid={
-            "max_depth":        [2, 3, 4, 5, None],
-            "min_samples_leaf": [1, 2, 3],
+            "max_depth": [3, 5, 10],
         },
         X_train=X_train,
         y_train=y_train,
@@ -190,11 +191,10 @@ def train_models(X_train, y_train) -> dict:
 
     # ── Random Forest ────────────────────────
     rf = tune_model(
-        estimator=RandomForestClassifier(random_state=RANDOM_SEED),
+        estimator=RandomForestClassifier(random_state=RANDOM_SEED, class_weight="balanced"),
         param_grid={
-            "n_estimators": [50, 100, 200],
-            "max_depth":    [2, 3, 4, None],
-            "max_features": ["sqrt", "log2"],
+            "n_estimators": [100, 200],
+            "max_depth": [5, 10],
         },
         X_train=X_train,
         y_train=y_train,
@@ -345,11 +345,11 @@ def main() -> None:
     print("Movie Success Predictor -- Model Training")
     print("=" * 60)
     print(f"  Random seed  : {RANDOM_SEED}")
-    print(f"  CV folds     : {CV_FOLDS}  (small-dataset safe)")
+    print(f"  CV folds     : {CV_FOLDS}")
     print(f"  CV scoring   : macro F1")
 
     # Step 1 — Load
-    df = load_dataset("final_movies.csv")
+    df = load_dataset("final_movies_large.csv")
 
     # Step 2 — Split
     X_train, X_test, y_train, y_test = split_data(df)

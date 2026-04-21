@@ -563,43 +563,7 @@
       <div class="card">
         <form id="predict-form" novalidate>
 
-          <!-- Financial Details -->
-          <p class="section-label">Financial Details</p>
-          <div class="form-grid">
 
-            <div class="form-group">
-              <label for="budget">Budget <span class="required">*</span><span class="hint">(USD)</span></label>
-              <input
-                id="budget" name="budget" type="number"
-                placeholder="e.g. 160000000"
-                min="0" step="1" required
-                aria-required="true"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="revenue">Revenue <span class="required">*</span><span class="hint">(USD)</span></label>
-              <input
-                id="revenue" name="revenue" type="number"
-                placeholder="e.g. 836800000"
-                min="0" step="1" required
-                aria-required="true"
-              />
-            </div>
-
-            <div class="form-group full-width">
-              <label for="roi">ROI <span class="required">*</span><span class="hint">(revenue ÷ budget)</span></label>
-              <input
-                id="roi" name="roi" type="number"
-                placeholder="e.g. 5.23  (auto-calculated below)"
-                step="0.01" required
-                aria-required="true"
-              />
-            </div>
-
-          </div>
-
-          <div class="divider"></div>
 
           <!-- Movie Metadata -->
           <p class="section-label">Movie Metadata</p>
@@ -650,23 +614,30 @@
               <select id="genre" name="genre" required aria-required="true">
                 <option value="" disabled selected>Select a genre…</option>
                 <option value="Action">Action</option>
+                <option value="Adventure">Adventure</option>
                 <option value="Animation">Animation</option>
+                <option value="Comedy">Comedy</option>
                 <option value="Crime">Crime</option>
+                <option value="Documentary">Documentary</option>
                 <option value="Drama">Drama</option>
-                <option value="Musical">Musical</option>
+                <option value="Family">Family</option>
+                <option value="Fantasy">Fantasy</option>
+                <option value="Foreign">Foreign</option>
+                <option value="History">History</option>
+                <option value="Horror">Horror</option>
+                <option value="Music">Music</option>
+                <option value="Mystery">Mystery</option>
                 <option value="Romance">Romance</option>
-                <option value="Sci-Fi">Sci-Fi</option>
+                <option value="Science Fiction">Science Fiction</option>
                 <option value="Thriller">Thriller</option>
+                <option value="War">War</option>
                 <option value="Western">Western</option>
               </select>
             </div>
 
           </div>
 
-          <!-- ROI auto-calc hint -->
-          <p id="roi-hint" style="font-size:12px;color:var(--text-dim);margin-top:-10px;margin-bottom:20px;display:none;">
-            💡 Auto-calculated ROI: <strong id="roi-calc-val" style="color:var(--gold)"></strong>
-          </p>
+
 
           <button type="submit" id="predict-btn" class="btn-predict">
             <div class="spinner" aria-hidden="true"></div>
